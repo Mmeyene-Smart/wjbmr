@@ -398,7 +398,7 @@ export default function App() {
             margin: '20px',
             borderTop: '5px solid var(--primary-color)'
           }}>
-            <div style={{ display: 'flex', justifycontent: 'space-between', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3 style={{ fontSize: '20px', color: 'var(--primary-dark)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Key size={20} style={{ color: 'var(--primary-color)' }} /> Admin Authentication
               </h3>
