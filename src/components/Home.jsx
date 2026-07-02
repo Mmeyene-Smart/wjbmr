@@ -48,11 +48,11 @@ const MOCK_PUBLICATIONS = [
   }
 ];
 
-export default function Home({ onNavigate }) {
+export default function Home({ onNavigate, articles = [] }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
-  const filteredPublications = MOCK_PUBLICATIONS.filter(pub => {
+  const filteredPublications = articles.filter(pub => {
     const matchesSearch = pub.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       pub.authors.some(auth => auth.name.toLowerCase().includes(searchTerm.toLowerCase()));
     

@@ -1,49 +1,65 @@
 import React, { useState } from 'react';
-import { FileText, Download, Share2, MessageSquare, ChevronDown, ChevronUp } from 'lucide-react';
+import { FileText, Download, Share2, MessageSquare, ChevronDown, ChevronUp, Search as SearchIcon, Minus, Plus } from 'lucide-react';
 
-const CURRENT_ARTICLES = [
-  {
-    id: 1,
-    title: 'Molecular Characterization and Drug Resistance Profiling of Plasmodium falciparum Isolates in Southern Nigeria',
-    authors: 'Dr. Ukeme D. Archibong, Dr. Juliet U. Don & Prof. Kofon G. Nkanta',
-    type: 'ORIGINAL RESEARCH',
-    pages: '101 - 112',
-    doi: 'https://doi.org/10.5281/wjbmr.2026.0401',
-    abstract: 'Background: Drug-resistant malaria remains a significant challenge to eradication campaigns in sub-Saharan Africa. This study investigates the molecular markers associated with chloroquine and artemisinin-based combination therapy (ACT) resistance in Plasmodium falciparum isolates in Akwa Ibom State, Nigeria. Methods: One hundred blood samples were collected from febrile patients. DNA extraction and nested PCR were used to amplify pfcrt and pfmdr1 genes, followed by restriction fragment length polymorphism (RFLP) analysis. Results: The pfcrt K76T mutation was detected in 35% of the samples, while pfmdr1 N86Y was present in 48%. No kelch13 mutations indicating artemisinin resistance were observed. Conclusion: Although artemisinin remains highly effective, there is a persistent presence of chloroquine resistance alleles, demanding continuous molecular surveillance.',
-    keywords: 'Plasmodium falciparum, Drug Resistance, pfcrt, pfmdr1, Nigeria'
-  },
-  {
-    id: 2,
-    title: 'Efficacy and Safety of Novel Phytochemical Extracts from Vernonia amygdalina in Hepatoprotective Therapy: A Randomized Controlled Trial',
-    authors: 'Dr. Ezenwa O. Nwosu & Prof. Blessing C. Akpan',
-    type: 'CLINICAL STUDY',
-    pages: '113 - 124',
-    doi: 'https://doi.org/10.5281/wjbmr.2026.0402',
-    abstract: 'Background: Liver diseases continue to present a heavy global burden with limited drug treatment options. Vernonia amygdalina is widely used in traditional African medicine. We aimed to evaluate the liver protection potential of its refined extracts under clinical trial settings. Methods: A double-blind RCT randomized 60 patients with mild hepatic impairment into receiving extract capsules (500mg daily) or placebo for 12 weeks. Serum liver enzymes (ALT, AST) and bilirubin were monitored. Results: Treatment with the extract resulted in a significant decrease in serum ALT (p < 0.01) and AST levels compared to placebo. No severe adverse events were reported. Conclusion: Standardized Vernonia amygdalina extract is safe and demonstrates clinical efficacy in improving liver function markers.',
-    keywords: 'Vernonia amygdalina, Hepatoprotection, Clinical Trial, Liver Enzymes'
-  },
-  {
-    id: 3,
-    title: 'Recent Advances in CRISPR-Cas9 Gene Editing Applications for Hereditary Hematological Disorders in Sub-Saharan Africa',
-    authors: 'Dr. Amina Y. Bello, Prof. Charles K. Tetteh & Dr. Sarah E. Cole',
-    type: 'REVIEW ARTICLE',
-    pages: '125 - 138',
-    doi: 'https://doi.org/10.5281/wjbmr.2026.0403',
-    abstract: 'Hereditary hematological disorders, particularly sickle cell disease (SCD) and beta-thalassemia, pose a massive socio-economic and public health burden in sub-Saharan Africa. With the advent of CRISPR-Cas9 gene editing technology, curative therapies are transitioning from theoretical concepts to clinical realities. This review summarizes the current landscape of gene editing trials targeting fetal hemoglobin (HbF) induction and direct beta-globin gene correction. We highlight the regulatory, financial, infrastructural, and bioethical challenges of deploying gene therapies in low-resource settings, and discuss strategies to build regional capacity for gene-editing medicine.',
-    keywords: 'CRISPR-Cas9, Sickle Cell Disease, Gene Therapy, Hematology, Africa'
-  }
-];
-
-export default function Current() {
+export default function Current({ articles = [] }) {
   const [expandedId, setExpandedId] = useState(null);
+  
+  // Sidebar state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedVolumes, setSelectedVolumes] = useState([]);
+  const [appliedSearchTerm, setAppliedSearchTerm] = useState('');
+  const [appliedVolumes, setAppliedVolumes] = useState([]);
+
+  // Collapsible accordion parts in sidebar
+  const [isSearchExpanded, setIsSearchExpanded] = useState(true);
+  const [isCategoryExpanded, setIsCategoryExpanded] = useState(true);
+
+  // Group unique volumes and calculate counts
+  const volumeCounts = articles.reduce((acc, art) => {
+    const vol = art.volume || 'Volume 12 (2026)';
+    acc[vol] = (acc[vol] || 0) + 1;
+    return acc;
+  }, {});
+
+  const uniqueVolumes = Object.keys(volumeCounts);
 
   const toggleAbstract = (id) => {
-    if (expandedId === id) {
-      setExpandedId(null);
-    } else {
-      setExpandedId(id);
-    }
+    setExpandedId(expandedId === id ? null : id);
   };
+
+  const handleVolumeCheckboxChange = (vol) => {
+    setSelectedVolumes(prev => 
+      prev.includes(vol) ? prev.filter(v => v !== vol) : [...prev, vol]
+    );
+  };
+
+  const handleApplyFilter = () => {
+    setAppliedSearchTerm(searchTerm);
+    setAppliedVolumes(selectedVolumes);
+  };
+
+  const handleResetFilter = () => {
+    setSearchTerm('');
+    setSelectedVolumes([]);
+    setAppliedSearchTerm('');
+    setAppliedVolumes([]);
+  };
+
+  // Filter articles based on applied filters
+  const filteredArticles = articles.filter(art => {
+    const matchesSearch = 
+      art.title.toLowerCase().includes(appliedSearchTerm.toLowerCase()) ||
+      (typeof art.authors === 'string' 
+        ? art.authors.toLowerCase().includes(appliedSearchTerm.toLowerCase())
+        : art.authors.some(auth => auth.name.toLowerCase().includes(appliedSearchTerm.toLowerCase()))
+      );
+
+    const matchesVolume = 
+      appliedVolumes.length === 0 || 
+      appliedVolumes.includes(art.volume || 'Volume 12 (2026)');
+
+    return matchesSearch && matchesVolume;
+  });
 
   return (
     <div className="container">
@@ -51,162 +67,363 @@ export default function Current() {
       <div style={{ marginBottom: '32px' }}>
         <h2 className="section-title">Current Issue</h2>
         <p style={{ color: 'var(--text-muted)' }}>
-          Volume 12, Issue 2, June 2026. Browse table of contents and download full papers.
+          Browse WJBMR Volume 12, Issue 2, June 2026 table of contents.
         </p>
       </div>
 
-      {/* Issue Cover Panel */}
-      <div className="glass-card responsive-home-grid" style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 3fr',
-        gap: '32px',
-        background: 'linear-gradient(135deg, var(--bg-white) 0%, var(--primary-light) 100%)',
-        borderColor: 'var(--accent-light)',
-        alignItems: 'center'
-      }} >
-        <div style={{
-          backgroundColor: 'var(--primary-color)',
-          color: 'var(--bg-white)',
-          padding: '40px 24px',
-          borderRadius: 'var(--radius-md)',
-          textAlign: 'center',
-          boxShadow: 'var(--shadow-md)',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          height: '220px'
-        }}>
-          <div style={{ fontSize: '12px', fontWeight: 'bold', letterSpacing: '1px' }}>WJBMR COVER</div>
-          <div style={{ fontSize: '32px', fontWeight: '800', fontFamily: 'var(--font-display)', margin: '12px 0 6px 0' }}>Vol. 12</div>
-          <div style={{ fontSize: '18px', fontWeight: '600' }}>Issue 2</div>
-          <div style={{ fontSize: '12px', opacity: 0.8, marginTop: '12px' }}>June 2026</div>
-        </div>
-
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2.5fr', gap: '32px' }} className="responsive-home-grid">
+        
+        {/* Left Side: Filter Sidebar (matches the user screenshot layout exactly!) */}
         <div>
-          <h3 style={{ fontSize: '22px', color: 'var(--primary-dark)', marginBottom: '12px' }}>
-            World Journal of Biomedical Research (Vol. 12, No. 2)
-          </h3>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', fontSize: '14px', color: 'var(--text-muted)', marginBottom: '16px' }}>
-            <span><strong>Released:</strong> June 30, 2026</span>
-            <span><strong>Articles:</strong> {CURRENT_ARTICLES.length}</span>
-            <span><strong>Publisher:</strong> College of Health Sciences, UNIUYO</span>
-          </div>
-          <p className="text-block" style={{ fontSize: '14px' }}>
-            This issue covers groundbreaking investigations in malaria parasite molecular genomics, clinical trials validation of indigenous West African medicinal plant extracts, and an in-depth bioethical review of deploying gene therapies for sickle cell anemias.
-          </p>
-        </div>
-      </div>
-
-      {/* Table of Contents Header */}
-      <h3 style={{ fontSize: '20px', color: 'var(--primary-dark)', margin: '40px 0 20px 0', borderBottom: '2px solid var(--border-color)', paddingBottom: '8px' }}>
-        Table of Contents
-      </h3>
-
-      {/* Articles List */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        {CURRENT_ARTICLES.map(art => (
-          <div key={art.id} className="glass-card" style={{ padding: '24px', margin: 0 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: '24px' }} className="responsive-home-grid">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: '1' }}>
-                <span style={{
-                  fontSize: '11px',
+          <div style={{
+            backgroundColor: 'var(--bg-white)',
+            borderRadius: '12px',
+            border: '1px solid var(--border-color)',
+            boxShadow: 'var(--shadow-sm)',
+            overflow: 'hidden',
+            padding: '24px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '24px'
+          }}>
+            {/* Search Section */}
+            <div>
+              <div 
+                onClick={() => setIsSearchExpanded(!isSearchExpanded)}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  cursor: 'pointer',
                   fontWeight: '700',
-                  color: 'var(--text-muted)',
-                  letterSpacing: '0.5px'
-                }}>
-                  {art.type} | PAGES: {art.pages}
-                </span>
-                
-                <h4 style={{ fontSize: '18px', color: 'var(--primary-dark)', lineHeight: '1.4' }}>
-                  {art.title}
-                </h4>
-                
-                <div style={{ fontSize: '14px', color: 'var(--text-dark)', fontWeight: '500' }}>
-                  {art.authors}
-                </div>
-
-                <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
-                  {art.doi}
-                </div>
+                  fontSize: '16px',
+                  color: 'var(--text-dark)',
+                  paddingBottom: '12px',
+                  borderBottom: '1px solid var(--border-color)',
+                  userSelect: 'none'
+                }}
+              >
+                <span>Search</span>
+                {isSearchExpanded ? <Minus size={16} /> : <Plus size={16} />}
               </div>
-
-              {/* Actions Box */}
-              <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-                <button 
-                  onClick={() => toggleAbstract(art.id)}
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: 'var(--radius-full)',
-                    border: '1px solid var(--border-color)',
-                    backgroundColor: 'var(--bg-white)',
-                    color: 'var(--primary-color)',
-                    fontFamily: 'var(--font-display)',
-                    fontWeight: '700',
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    transition: 'var(--transition)'
-                  }}
-                >
-                  Abstract {expandedId === art.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                </button>
-
-                <a 
-                  href="#"
-                  onClick={(e) => { e.preventDefault(); alert("PDF Download started... (Simulated)"); }}
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: 'var(--radius-full)',
-                    border: '1px solid var(--primary-color)',
-                    backgroundColor: 'var(--primary-color)',
-                    color: 'var(--bg-white)',
-                    fontFamily: 'var(--font-display)',
-                    fontWeight: '700',
-                    fontSize: '13px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    transition: 'var(--transition)'
-                  }}
-                >
-                  <Download size={14} /> PDF
-                </a>
-              </div>
+              
+              {isSearchExpanded && (
+                <div style={{ marginTop: '16px', position: 'relative' }}>
+                  <input 
+                    type="text" 
+                    placeholder="Search with keyword"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '12px 36px 12px 16px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      fontSize: '14px',
+                      fontFamily: 'var(--font-sans)',
+                      outline: 'none',
+                      boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.02)',
+                      backgroundColor: 'var(--bg-light)'
+                    }}
+                  />
+                  <SearchIcon 
+                    size={16} 
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: 'var(--text-muted)'
+                    }} 
+                  />
+                </div>
+              )}
             </div>
 
-            {/* Collapsed Abstract Content */}
-            {expandedId === art.id && (
-              <div style={{
-                marginTop: '20px',
-                paddingTop: '20px',
-                borderTop: '1px solid var(--border-color)',
-                backgroundColor: 'var(--bg-light)',
-                padding: '20px',
-                borderRadius: 'var(--radius-md)'
-              }}>
-                <h5 style={{ fontSize: '14px', color: 'var(--primary-dark)', marginBottom: '8px' }}>Abstract</h5>
-                <p className="text-block" style={{ fontSize: '14px', lineHeight: '1.6', margin: 0 }}>
-                  {art.abstract}
-                </p>
-                <div style={{ marginTop: '14px', fontSize: '13px' }}>
-                  <strong>Keywords:</strong> <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>{art.keywords}</span>
-                </div>
-                
-                {/* Micro Actions */}
-                <div style={{ display: 'flex', gap: '16px', marginTop: '16px', fontSize: '12px', color: 'var(--text-muted)' }}>
-                  <button style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                    <Share2 size={14} /> Cite this Article
-                  </button>
-                  <button style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                    <MessageSquare size={14} /> Feedback
-                  </button>
-                </div>
+            {/* Volume Filter Section */}
+            <div>
+              <div 
+                onClick={() => setIsCategoryExpanded(!isCategoryExpanded)}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  fontWeight: '700',
+                  fontSize: '16px',
+                  color: 'var(--text-dark)',
+                  paddingBottom: '12px',
+                  borderBottom: '1px solid var(--border-color)',
+                  userSelect: 'none'
+                }}
+              >
+                <span>By category</span>
+                {isCategoryExpanded ? <Minus size={16} /> : <Plus size={16} />}
               </div>
-            )}
+
+              {isCategoryExpanded && (
+                <div style={{
+                  marginTop: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}>
+                  {uniqueVolumes.map(vol => (
+                    <label 
+                      key={vol} 
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        color: 'var(--text-dark)',
+                        fontWeight: '500'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={selectedVolumes.includes(vol)}
+                          onChange={() => handleVolumeCheckboxChange(vol)}
+                          style={{
+                            width: '18px',
+                            height: '18px',
+                            borderRadius: '4px',
+                            border: '1px solid var(--border-color)',
+                            cursor: 'pointer'
+                          }}
+                        />
+                        <span>{vol}</span>
+                      </div>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
+                        {volumeCounts[vol]}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons (Themed blue instead of green for brand consistency!) */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' }}>
+              <button 
+                onClick={handleApplyFilter}
+                className="submit-form-btn"
+                style={{
+                  padding: '12px',
+                  fontSize: '14px',
+                  fontWeight: '700',
+                  borderRadius: '8px',
+                  width: '100%',
+                  background: 'var(--primary-color)'
+                }}
+              >
+                Apply filter
+              </button>
+              
+              <button 
+                onClick={handleResetFilter}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                  padding: '8px',
+                  transition: 'var(--transition)'
+                }}
+                onMouseEnter={(e) => e.target.style.color = 'var(--primary-color)'}
+                onMouseLeave={(e) => e.target.style.color = 'var(--text-muted)'}
+              >
+                Reset filter
+              </button>
+            </div>
+
           </div>
-        ))}
+        </div>
+
+        {/* Right Side: Articles Listing */}
+        <div>
+          {/* Cover Panel Header */}
+          <div className="glass-card responsive-home-grid" style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 3fr',
+            gap: '32px',
+            background: 'linear-gradient(135deg, var(--bg-white) 0%, var(--primary-light) 100%)',
+            borderColor: 'var(--accent-light)',
+            alignItems: 'center',
+            padding: '24px',
+            marginBottom: '24px'
+          }}>
+            <div style={{
+              backgroundColor: 'var(--primary-color)',
+              color: 'var(--bg-white)',
+              padding: '30px 16px',
+              borderRadius: 'var(--radius-md)',
+              textAlign: 'center',
+              boxShadow: 'var(--shadow-sm)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              height: '180px'
+            }}>
+              <div style={{ fontSize: '10px', fontWeight: 'bold', letterSpacing: '1px' }}>WJBMR COVER</div>
+              <div style={{ fontSize: '28px', fontWeight: '800', fontFamily: 'var(--font-display)', margin: '8px 0 4px 0' }}>Vol. 12</div>
+              <div style={{ fontSize: '15px', fontWeight: '600' }}>Issue 2</div>
+              <div style={{ fontSize: '11px', opacity: 0.8, marginTop: '8px' }}>June 2026</div>
+            </div>
+
+            <div>
+              <h3 style={{ fontSize: '20px', color: 'var(--primary-dark)', marginBottom: '8px' }}>
+                World Journal of Biomedical Research (WJBMR)
+              </h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '12px' }}>
+                <span><strong>Release:</strong> June 2026</span>
+                <span><strong>Indexed:</strong> AIM, AJOL, CrossRef</span>
+              </div>
+              <p className="text-block" style={{ fontSize: '13px', margin: 0 }}>
+                Filter publications using the sidebar search tools. Access full-text abstracts or read directly in the HTML frames below.
+              </p>
+            </div>
+          </div>
+
+          {/* Dynamic Article List */}
+          {filteredArticles.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {filteredArticles.map(art => (
+                <div key={art.id} className="glass-card" style={{ padding: '24px', margin: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: '20px' }} className="responsive-home-grid">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: '1' }}>
+                      <span style={{
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        color: 'var(--text-muted)',
+                        letterSpacing: '0.5px'
+                      }}>
+                        {art.type || art.category} | PAGES: {art.pages} | {art.volume}
+                      </span>
+                      
+                      <h4 style={{ fontSize: '17px', color: 'var(--primary-dark)', lineHeight: '1.4' }}>
+                        {art.title}
+                      </h4>
+                      
+                      <div style={{ fontSize: '13px', color: 'var(--text-dark)', fontWeight: '500' }}>
+                        {typeof art.authors === 'string' ? art.authors : art.authors.map(a => a.name).join(', ')}
+                      </div>
+
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                        {art.doi}
+                      </div>
+                    </div>
+
+                    {/* Actions Box */}
+                    <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                      <button 
+                        onClick={() => toggleAbstract(art.id)}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: 'var(--radius-full)',
+                          border: '1px solid var(--border-color)',
+                          backgroundColor: 'var(--bg-white)',
+                          color: 'var(--primary-color)',
+                          fontFamily: 'var(--font-display)',
+                          fontWeight: '700',
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          transition: 'var(--transition)'
+                        }}
+                      >
+                        Abstract {expandedId === art.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                      </button>
+
+                      <a 
+                        href="#"
+                        onClick={(e) => { e.preventDefault(); alert("PDF Simulated Download"); }}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: 'var(--radius-full)',
+                          border: '1px solid var(--primary-color)',
+                          backgroundColor: 'var(--primary-color)',
+                          color: 'var(--bg-white)',
+                          fontFamily: 'var(--font-display)',
+                          fontWeight: '700',
+                          fontSize: '12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          transition: 'var(--transition)'
+                        }}
+                      >
+                        <Download size={12} /> PDF
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Expandable Abstract Panel */}
+                  {expandedId === art.id && (
+                    <div style={{
+                      marginTop: '16px',
+                      paddingTop: '16px',
+                      borderTop: '1px solid var(--border-color)',
+                      backgroundColor: 'var(--bg-light)',
+                      padding: '16px',
+                      borderRadius: '8px'
+                    }}>
+                      <h5 style={{ fontSize: '13px', color: 'var(--primary-dark)', marginBottom: '8px' }}>Abstract</h5>
+                      
+                      {/* Check if article is dynamic HTML upload or default text */}
+                      {art.isHtmlArticle ? (
+                        <div 
+                          dangerouslySetInnerHTML={{ __html: art.abstract }} 
+                          className="html-article-renderer" 
+                          style={{ fontSize: '13px', lineHeight: '1.6' }}
+                        />
+                      ) : (
+                        <p className="text-block" style={{ fontSize: '13px', lineHeight: '1.6', margin: 0 }}>
+                          {art.abstract}
+                        </p>
+                      )}
+
+                      {art.keywords && (
+                        <div style={{ marginTop: '12px', fontSize: '12px' }}>
+                          <strong>Keywords:</strong> <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>{art.keywords}</span>
+                        </div>
+                      )}
+                      
+                      <div style={{ display: 'flex', gap: '16px', marginTop: '16px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                        <button style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                          <Share2 size={12} /> Cite this Article
+                        </button>
+                        <button style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                          <MessageSquare size={12} /> Feedback
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{
+              textAlign: 'center',
+              padding: '60px 40px',
+              border: '1px dashed var(--border-color)',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--text-muted)',
+              backgroundColor: 'var(--bg-white)',
+              marginTop: '16px'
+            }}>
+              No published articles match the search keywords or volume selection criteria.
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );

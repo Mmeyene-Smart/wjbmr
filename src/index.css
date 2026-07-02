@@ -67,7 +67,8 @@ a:hover {
 
 /* Banner Component (matches Ref 1 structure) */
 .header-banner {
-  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 60%, var(--accent-color) 100%);
+  background: linear-gradient(135deg, rgba(7, 42, 72, 0.9) 0%, rgba(15, 76, 129, 0.85) 60%, rgba(0, 119, 182, 0.75) 100%), url('/banner_bg.png') no-repeat center center;
+  background-size: cover;
   color: var(--bg-white);
   padding: 32px 0;
   position: relative;
@@ -770,3 +771,46 @@ a:hover {
   font-size: 32px;
   box-shadow: 0 4px 10px rgba(15, 76, 129, 0.15);
 }
+
+/* HTML Upload Formatted Content Styles */
+.html-article-renderer h1, .html-article-renderer h2, .html-article-renderer h3,
+.html-content-preview h1, .html-content-preview h2, .html-content-preview h3 {
+  font-size: 16px;
+  color: var(--primary-color);
+  margin-top: 16px;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+.html-article-renderer p, .html-content-preview p {
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--text-dark);
+  line-height: 1.6;
+}
+.html-article-renderer ul, .html-article-renderer ol,
+.html-content-preview ul, .html-content-preview ol {
+  padding-left: 20px;
+  margin-bottom: 12px;
+}
+.html-article-renderer li, .html-content-preview li {
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+.html-article-renderer table, .html-content-preview table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+  font-size: 12px;
+}
+.html-article-renderer th, .html-article-renderer td,
+.html-content-preview th, .html-content-preview td {
+  border: 1px solid var(--border-color);
+  padding: 8px 12px;
+  text-align: left;
+}
+.html-article-renderer th, .html-content-preview th {
+  background-color: var(--primary-light);
+  color: var(--primary-dark);
+  font-weight: 700;
+}
+

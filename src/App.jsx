@@ -1,15 +1,110 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Home from './components/Home';
 import About from './components/About';
 import Current from './components/Current';
 import Archives from './components/Archives';
 import Guidelines from './components/Guidelines';
 import SubmitManuscript from './components/SubmitManuscript';
-import { ArrowRight, Menu, X, BookOpen, GraduationCap, Mail } from 'lucide-react';
+import AdminPanel from './components/AdminPanel';
+import { ArrowRight, Menu, X, BookOpen, GraduationCap, Mail, ShieldAlert, Key } from 'lucide-react';
+
+const INITIAL_ARTICLES = [
+  {
+    id: 1,
+    category: 'ORIGINAL RESEARCH',
+    title: 'Molecular Characterization and Drug Resistance Profiling of Plasmodium falciparum Isolates in Southern Nigeria',
+    authors: [
+      { name: 'Dr. Ukeme D. Archibong', profile: '#' },
+      { name: 'Dr. Juliet U. Don', profile: '#' },
+      { name: 'Prof. Kofon G. Nkanta', profile: '#' }
+    ],
+    date: 'June 28, 2026',
+    readTime: '12 min read',
+    pdfUrl: '#',
+    chartType: 'bar',
+    chartData: [45, 62, 38, 85, 52],
+    doi: 'https://doi.org/10.5281/wjbmr.2026.0401',
+    pages: '101 - 112',
+    volume: 'Volume 12 (2026)',
+    issue: 'Issue 2 (June 2026)',
+    abstract: 'Background: Drug-resistant malaria remains a significant challenge to eradication campaigns in sub-Saharan Africa. This study investigates the molecular markers associated with chloroquine and artemisinin-based combination therapy (ACT) resistance in Plasmodium falciparum isolates in Akwa Ibom State, Nigeria. Methods: One hundred blood samples were collected from febrile patients. DNA extraction and nested PCR were used to amplify pfcrt and pfmdr1 genes, followed by restriction fragment length polymorphism (RFLP) analysis. Results: The pfcrt K76T mutation was detected in 35% of the samples, while pfmdr1 N86Y was present in 48%. No kelch13 mutations indicating artemisinin resistance were observed. Conclusion: Although artemisinin remains highly effective, there is a persistent presence of chloroquine resistance alleles, demanding continuous molecular surveillance.',
+    keywords: 'Plasmodium falciparum, Drug Resistance, pfcrt, pfmdr1, Nigeria',
+    isHtmlArticle: false
+  },
+  {
+    id: 2,
+    category: 'CLINICAL STUDY',
+    title: 'Efficacy and Safety of Novel Phytochemical Extracts from Vernonia amygdalina in Hepatoprotective Therapy: A Randomized Controlled Trial',
+    authors: [
+      { name: 'Dr. Ezenwa O. Nwosu', profile: '#' },
+      { name: 'Prof. Blessing C. Akpan', profile: '#' }
+    ],
+    date: 'May 15, 2026',
+    readTime: '15 min read',
+    pdfUrl: '#',
+    chartType: 'line',
+    chartData: [10, 25, 45, 60, 95],
+    doi: 'https://doi.org/10.5281/wjbmr.2026.0402',
+    pages: '113 - 124',
+    volume: 'Volume 12 (2026)',
+    issue: 'Issue 2 (June 2026)',
+    abstract: 'Background: Liver diseases continue to present a heavy global burden with limited drug treatment options. Vernonia amygdalina is widely used in traditional African medicine. We aimed to evaluate the liver protection potential of its refined extracts under clinical trial settings. Methods: A double-blind RCT randomized 60 patients with mild hepatic impairment into receiving extract capsules (500mg daily) or placebo for 12 weeks. Serum liver enzymes (ALT, AST) and bilirubin were monitored. Results: Treatment with the extract resulted in a significant decrease in serum ALT (p < 0.01) and AST levels compared to placebo. No severe adverse events were reported. Conclusion: Standardized Vernonia amygdalina extract is safe and demonstrates clinical efficacy in improving liver function markers.',
+    keywords: 'Vernonia amygdalina, Hepatoprotection, Clinical Trial, Liver Enzymes',
+    isHtmlArticle: false
+  },
+  {
+    id: 3,
+    category: 'REVIEW ARTICLE',
+    title: 'Recent Advances in CRISPR-Cas9 Gene Editing Applications for Hereditary Hematological Disorders in Sub-Saharan Africa',
+    authors: [
+      { name: 'Dr. Amina Y. Bello', profile: '#' },
+      { name: 'Prof. Charles K. Tetteh', profile: '#' },
+      { name: 'Dr. Sarah E. Cole', profile: '#' }
+    ],
+    date: 'April 02, 2026',
+    readTime: '18 min read',
+    pdfUrl: '#',
+    chartType: 'pie',
+    chartData: [30, 20, 50],
+    doi: 'https://doi.org/10.5281/wjbmr.2026.0403',
+    pages: '125 - 138',
+    volume: 'Volume 12 (2026)',
+    issue: 'Issue 2 (June 2026)',
+    abstract: 'Hereditary hematological disorders, particularly sickle cell disease (SCD) and beta-thalassemia, pose a massive socio-economic and public health burden in sub-Saharan Africa. With the advent of CRISPR-Cas9 gene editing technology, curative therapies are transitioning from theoretical concepts to clinical realities. This review summarizes the current landscape of gene editing trials targeting fetal hemoglobin (HbF) induction and direct beta-globin gene correction. We highlight the regulatory, financial, infrastructural, and bioethical challenges of deploying gene therapies in low-resource settings, and discuss strategies to build regional capacity for gene-editing medicine.',
+    keywords: 'CRISPR-Cas9, Sickle Cell Disease, Gene Therapy, Hematology, Africa',
+    isHtmlArticle: false
+  }
+];
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('Home');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Articles state initialized from localStorage
+  const [articles, setArticles] = useState(() => {
+    const saved = localStorage.getItem('wjbmr_articles');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Failed to parse saved articles", e);
+      }
+    }
+    return INITIAL_ARTICLES;
+  });
+
+  // Save to localStorage when articles change
+  useEffect(() => {
+    localStorage.setItem('wjbmr_articles', JSON.stringify(articles));
+  }, [articles]);
+
+  // Admin login states
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [adminPassword, setAdminPassword] = useState('');
+  const [adminError, setAdminError] = useState('');
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(() => {
+    return sessionStorage.getItem('wjbmr_admin_auth') === 'true';
+  });
 
   const handleNavigate = (page) => {
     setCurrentPage(page);
@@ -17,29 +112,63 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleAdminLoginSubmit = (e) => {
+    e.preventDefault();
+    // Simple secure password verification (for demo/mock purposes as specified)
+    if (adminPassword === 'admin123') {
+      setIsAdminAuthenticated(true);
+      sessionStorage.setItem('wjbmr_admin_auth', 'true');
+      setShowAdminLogin(false);
+      setAdminPassword('');
+      setAdminError('');
+      handleNavigate('Admin');
+    } else {
+      setAdminError('Invalid administrator credentials');
+    }
+  };
+
+  const handleAddArticle = (newArticle) => {
+    setArticles(prev => [newArticle, ...prev]);
+  };
+
+  const handleLogoutAdmin = () => {
+    setIsAdminAuthenticated(false);
+    sessionStorage.removeItem('wjbmr_admin_auth');
+    handleNavigate('Home');
+  };
+
   const renderPage = () => {
     switch (currentPage) {
       case 'Home':
-        return <Home onNavigate={handleNavigate} />;
+        return <Home onNavigate={handleNavigate} articles={articles} />;
       case 'About':
         return <About />;
       case 'Current':
-        return <Current />;
+        return <Current articles={articles} />;
       case 'Archives':
         return <Archives onNavigate={handleNavigate} />;
       case 'Guidelines':
         return <Guidelines />;
       case 'Submit':
         return <SubmitManuscript />;
+      case 'Admin':
+        return isAdminAuthenticated ? (
+          <AdminPanel 
+            onAddArticle={handleAddArticle} 
+            onBackToHome={() => handleNavigate('Home')} 
+          />
+        ) : (
+          <Home onNavigate={handleNavigate} articles={articles} />
+        );
       default:
-        return <Home onNavigate={handleNavigate} />;
+        return <Home onNavigate={handleNavigate} articles={articles} />;
     }
   };
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       
-      {/* 1. Header Banner (matches Ref 1 structure but themed blue) */}
+      {/* 1. Header Banner (matches Ref 1 structure but themed blue with biomedical bg image) */}
       <header className="header-banner">
         <div className="container">
           <div className="banner-content">
@@ -61,7 +190,7 @@ export default function App() {
               <h1 className="banner-full-title" style={{ color: '#ffffff' }}>
                 WORLD JOURNAL OF BIOMEDICAL RESEARCH
               </h1>
-              <span style={{ fontSize: '13px', opacity: '0.85', letterSpacing: '0.5px', marginTop: '4px', fontWeight: '500' }}>
+              <span style={{ fontSize: '13px', opacity: '0.9', letterSpacing: '0.5px', marginTop: '4px', fontWeight: '500' }}>
                 College of Health Sciences | University of Uyo, Nigeria
               </span>
             </div>
@@ -83,6 +212,15 @@ export default function App() {
                 {page}
               </button>
             ))}
+            {isAdminAuthenticated && (
+              <button 
+                onClick={() => handleNavigate('Admin')} 
+                className={`nav-link ${currentPage === 'Admin' ? 'active' : ''}`}
+                style={{ color: '#dc2626', display: 'flex', alignItems: 'center', gap: '4px' }}
+              >
+                <ShieldAlert size={14} /> Admin panel
+              </button>
+            )}
           </div>
 
           {/* Submit Action Pill Button (matches Ref 1 submit button) */}
@@ -143,6 +281,25 @@ export default function App() {
                 {page}
               </button>
             ))}
+            {isAdminAuthenticated && (
+              <button
+                onClick={() => handleNavigate('Admin')}
+                style={{
+                  textAlign: 'left',
+                  padding: '8px 16px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: 'none',
+                  backgroundColor: currentPage === 'Admin' ? 'var(--primary-light)' : 'transparent',
+                  color: '#dc2626',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  width: '100%',
+                  cursor: 'pointer'
+                }}
+              >
+                Admin Panel
+              </button>
+            )}
           </div>
         )}
       </nav>
@@ -192,8 +349,45 @@ export default function App() {
                   <Mail size={16} />
                   <a href="mailto:editor@wjbmr.org" style={{ color: 'var(--accent-light)' }}>editor@wjbmr.org</a>
                 </div>
-                <div style={{ fontSize: '12px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '10px', marginTop: '4px' }}>
-                  Indexed in: African Index Medicus, AJOL, CrossRef, Google Scholar.
+                
+                {/* Admin Access Trigger */}
+                <div style={{ marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '12px' }}>
+                  {isAdminAuthenticated ? (
+                    <button 
+                      onClick={handleLogoutAdmin}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#f87171',
+                        fontSize: '12px',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      Logout Admin
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={() => setShowAdminLogin(true)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'rgba(255,255,255,0.4)',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                      onMouseEnter={(e) => e.target.style.color = 'var(--bg-white)'}
+                      onMouseLeave={(e) => e.target.style.color = 'rgba(255,255,255,0.4)'}
+                    >
+                      <Key size={12} /> Administrator Portal
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -209,6 +403,67 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* Admin Login Password Modal */}
+      {showAdminLogin && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(7, 42, 72, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999
+        }}>
+          <div className="glass-card" style={{
+            width: '100%',
+            maxWidth: '400px',
+            padding: '32px',
+            boxShadow: 'var(--shadow-lg)',
+            margin: '20px',
+            borderTop: '5px solid var(--primary-color)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '20px', color: 'var(--primary-dark)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Key size={20} style={{ color: 'var(--primary-color)' }} /> Admin Authentication
+              </h3>
+              <button 
+                onClick={() => { setShowAdminLogin(false); setAdminPassword(''); setAdminError(''); }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleAdminLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                Please enter the administrative key to access article publishing systems. (Use password: <strong>admin123</strong>)
+              </p>
+              
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Secret Key *</label>
+                <input 
+                  type="password" 
+                  value={adminPassword} 
+                  onChange={(e) => setAdminPassword(e.target.value)} 
+                  placeholder="••••••••"
+                  className="form-input"
+                  autoFocus
+                />
+                {adminError && <div style={{ color: '#dc2626', fontSize: '12px', marginTop: '6px' }}>{adminError}</div>}
+              </div>
+
+              <button type="submit" className="submit-form-btn" style={{ marginTop: '8px' }}>
+                Verify & Enter Dashboard
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* CSS adjustments for mobile burger toggle */}
       <style dangerouslySetInnerHTML={{__html: `
